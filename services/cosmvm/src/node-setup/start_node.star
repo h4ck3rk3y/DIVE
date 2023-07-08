@@ -37,7 +37,11 @@ def start_cosmos_node(plan,args):
 
     node_service_response = plan.add_service(name=SERVICE_NAME, config= cosmwasm_node_config)
 
-    return struct(
-        service_name = SERVICE_NAME,
-        cid = CHAIN_ID
-    )
+    def get_service_config(nid, service_name, cid):
+
+        return struct(
+            service_name = SERVICE_NAME,
+            cid = CHAIN_ID
+        )
+
+    

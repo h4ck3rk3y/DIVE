@@ -1,0 +1,17 @@
+{
+    "type": "icon",
+    "value": {
+        "key": "",
+        "chain-id": "ibc-icon",
+        "rpc-addr": "http://localhost:9082/api/v3/",
+        "timeout": "30s",
+        "keystore": "$HOME/keystore/godWallet.json",
+        "password": "gochain",
+        "icon-network-id": "3",
+        "btp-network-id": "1",
+        "btp-network-type-id": "1",
+        "start-btp-height": "0",
+        "ibc-handler-address": "",
+        "archway-handler-address": ""
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "type": "archway",
+    "value": {
+      "key-directory": "$HOME/.relayer" ,
+      "key": "default",
+      "chain-id": "my-chain",
+      "rpc-addr": "tcp://127.0.0.1:4564",
+      "account-prefix": "archway",
+      "keyring-backend": "test",
+      "gas-adjustment": "1.5",
+      "gas-prices": "0.02stake",
+      "min-gas-amount": "1_000_000",
+      "debug": "true",
+      "timeout": "20s",
+      "block-timeout": "",
+      "output-format": "json",
+      "sign-mode": "direct",
+      "extra-codecs": "[]",
+      "coin-type": "0",
+      "broadcast-mode": "batch",
+       "ibc-handler-address": ""
+    }
+  }

@@ -8,6 +8,11 @@ btp_relay = import_module("github.com/hugobyte/dive/services/relay/btp_relay.sta
 cosmvm_node = import_module("github.com/hugobyte/dive/services/cosmvm/src/node-setup/start_node.star")
 cosmvm_deploy = import_module("github.com/hugobyte/dive/services/cosmvm/src/node-setup/deploy.star")
 cosmvm_contract = import_module("github.com/hugobyte/dive/services/cosmvm/src/relay-setup/contract-configuration.star")
+cosmvm_service = import_module("github.com/hugobyte/dive/services/cosmvm/cosmos.star")
+icon_node_launcher = import_module("github.com/hugobyte/dive/services/jvm/icon/src/node-setup/start_icon_node.star")
+cosmvm_relay = import_module("github.com/hugobyte/dive/services/relay/cosmos_relay.star")
+cosmvm_rely_setup = import_module("github.com/hugobyte/dive/services/cosmvm/src/relay-setup/setup_relay.star")
+
 
 def run(plan,args):
 
@@ -65,6 +70,11 @@ def parse_input_and_start(plan,args):
         if args["relay"]["name"] == "btp":
             data = run_btp_setup(plan,args["relay"])
             
+            return data
+
+        elif args["relay"]["name"] == "cosmos":
+            data = run_cosmos_setup(plan,args["relay"])
+
             return data
 
         else:
@@ -247,4 +257,138 @@ def run_btp_setup(plan,args):
 
     return config_data
     
-   
+def generate_config_data(args):
+
+    data = get_args_data(args)
+    config_data = {
+        "links": data.links,
+        "chains" : {
+            "%s" % data.src : {},
+            "%s" % data.dst : {}
+        },
+        "contracts" : {
+            "%s" % data.src : {},
+            "%s" % data.dst : {}
+        },
+        "bridge" : data.bridge
+    }
+
+    return config_data
+
+def get_args_data(args):
+
+    links = args["links"]
+    source_chain = links["src"]
+    destination_chain = links["dst"]
+
+    if destination_chain == "cosmwasm" and source_chain == "cosmwasm":
+        destination_chain = "cosmwasm"
+
+    bridge = args["bridge"]
+
+    return struct(
+        links = links,
+        src = source_chain,
+        dst = destination_chain,
+        bridge = bridge
+    )
+
+# starts cosmos relay setup
+
+def run_cosmos_setup(plan,args):
+
+    args_data = get_args_data(args)
+
+    config_data = generate_config_data(args)
+
+    if args_data.dst == "cosmwasm":
+        # data = cosmvm_node.start_cosmos_node(plan, args)
+        # start_icon = icon_node_launcher.start_icon_node(plan,service_config,id,start_file_name)
+        start_icon = icon_service.start_node_service(plan)
+
+        start_cosmos = cosmvm_node.start_cosmos_node(plan,args)
+
+        config_data["chains"][args_data.src] = start_icon
+        config_data["chains"][args_data.dst] = start_cosmos
+
+        src_light_client = cosmvm_contract.light_client_for_icon(plan,start_icon)
+
+        src_bmc = cosmvm_contract.deploy_bmc(plan,start_icon)
+
+        # src_xcall = cosmvm_contract.deploy_mock_app(plan, src_bmc, start_icon)
+
+        src_ibc_handler = cosmvm_contract.ibc_handler(plan,start_icon)
+
+        
+        dst_ibc_core = cosmvm_contract.deploy_core(plan,args)
+
+        dst_xcall = cosmvm_contract.deploy_xcall(plan,args, dst_ibc_core)
+
+        dst_light_client = cosmvm_contract.deploy_light_client(plan,args)
+
+        src_contract_address = {
+            # "xcall" : src_xcall,
+            "ibc_handler" : src_ibc_handler,
+            "light_client_address" : src_light_client
+        }
+
+        dst_contract_address = {
+            "ibc_core" : dst_ibc_core,
+            "xcall" : dst_xcall,
+            "light_client" : dst_light_client
+        }
+
+        config_data["contracts"][args_data.src] = src_contract_address
+        config_data["contracts"][args_data.dst] = dst_contract_address
+
+       
+
+        cosmvm_relay.start_cosmos_relay(plan, args, args_data.src, args_data.dst)
+
+        cosmvm_rely_setup.setup_relay(plan,args,src_ibc_handler, dst_ibc_core )
+
+        
+        
+
+
+
+
+
+        # config_data["chains"][args_data.src] = data.src_config
+        # config_data["chains"][args_data.dst] = data.dst_config
+
+        # cosmvm_service.configure_cosmvm_to_cosmvm_node(plan, config_data["chains"][args_data.src], config_data["chains"][args_data.dst])
+
+        # src_ibc_handler_address, dst_ibc_handler_address = cosmvm_contract.ibc_handler(plan,args)
+
+        # src_light_client_address, dst_light_client_address = cosmvm_contract.light_client(plan,args)
+
+        # src_xcall_address, dst_xcall_address = cosmvm_contract.deploy_mock_app(plan, ibc_handler,args)
+
+        # src_contract_address ={
+        #     "xcall": src_xcall_address,
+        #     "ibc_handler" : src_ibc_handler_address,
+        #     "light_client_address": src_light_client_address
+        # }
+
+        # dst_contract_address = {
+        #     "xcall": dst_xcall_address,
+        #     "ibc_handler" : dst_ibc_handler_address,
+        #     "light_client_address": dst_light_client_address
+        # }
+
+        # config_data["contracts"][args_data.src] = src_contract_addresses
+        # config_data["contracts"][args_data.dst] = dst_contract_addresses
+        # config_data["chains"][args_data.src]["block_number"] = src_block_height
+        # config_data["chains"][args_data.dst]["block_number"] =  dst_block_height
+
+
+
+
+
+
+
+       
+
+
+

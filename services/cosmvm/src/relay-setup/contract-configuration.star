@@ -1,5 +1,10 @@
 cosmvm_deploy = import_module("github.com/hugobyte/dive/services/cosmvm/src/node-setup/deploy.star")
 cosmvm_node = import_module("github.com/hugobyte/dive/services/cosmvm/src/node-setup/start_node.star")
+cosmvm_setup = import_module("github.com/hugobyte/dive/services/cosmvm/src/node-setup/setup_node.star")
+contract_deployment_service = import_module("github.com/hugobyte/dive/services/jvm/icon/src/node-setup/contract_deploy.star")
+icon_relay_setup = import_module("github.com/hugobyte/dive/services/jvm/icon/src/relay-setup/contract_configuration.star")
+
+ICON_NODE = "http://localhost:9082/api/v3/"
 
 def deploy_core(plan,args):
 
@@ -45,5 +50,62 @@ def cosmwasm(plan, args):
     plan.print(light_client)
 
     return value
+
+# Deploy ibc_hndler
+def ibc_handler(plan,args):
+
+    plan.print("IBC handler")
+
+    init_message = '{}' 
+
+    tx_hash = contract_deployment_service.deploy_contract(plan,"ibc-0.1.0-optimized",init_message, args)
+
+    # score_address = contract_deployment_service.get_score_address(plan,"cosmos",tx_hash)
+
+    plan.print("deployed ibc handler")
+
+    return tx_hash
+
+# Deploy bmc
+def deploy_bmc(plan,args):
+    plan.print("Deploying BMC Contract")
+    init_message = '{"_net":"%s"}' % args["network"]
+
+    bmc_hash = contract_deployment_service.deploy_contract(plan,"bmc",init_message,args)
+
+    # service_name = args["service_name"]
+    # score_address = contract_deployment_service.get_score_address(plan,"cosmos",tx_hash)
+    return bmc_hash
+
+# deploy xcall
+# def deploy_mock_app(plan, bmc_hash, args ):
+
+#     plan.print("deploying mock app")
+
+#     init_message = '{"_bmc":"%s"}' % bmc_hash
+
+#     tx_hash = contract_deployment_service.deploy_contract(plan,"xcall-0.1.0-optimized", init_message, args)
+
+#     # score_address = contract_deployment_service.get_score_address(plan,"cosmos",tx_hash)
+#     # icon_relay_setup.add_service(plan,bmc_address,score_address,args)
+
+#     plan.print("deploy mock app")
+
+#     return tx_hash
+
+# deploy light_client 
+def light_client_for_icon(plan,args):
+
+    plan.print("deploy tendermint lightclient")
+
+    init_message = '{}' 
+
+    tx_hash = contract_deployment_service.deploy_contract(plan, "tendermint-0.1.0-optimized", init_message, args)
+
+    # score_address = contract_deployment_service.get_score_address(plan,"cosmos",tx_hash)
+
+    plan.print("deploy light client")
+
+    return tx_hash
 
 
